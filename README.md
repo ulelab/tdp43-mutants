@@ -3,4 +3,4 @@
 
 This repository contains code for the computational analysis from [TDP-43 condensation properties specify its RNA-binding and regulatory repertoire]()
 
-![graphical_abstract](img/graphical_abstract.png)
+![graphical_abstract](img/graphical_abstract_FL9.jpg)
