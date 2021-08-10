@@ -1,0 +1,15 @@
+# You can use this file to create a conda environment for this pipeline:
+# conda env create -f environment.yml
+
+name: tdp43-mutants-salmon
+
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+
+dependencies:
+  - bioconda::fastqc=0.11.9
+  - bioconda::cutadapt=3.3
+  - bioconda::salmon=1.4.0
+  - conda-forge::tbb=2020.2 # Need to specify this as issue with 2021 version

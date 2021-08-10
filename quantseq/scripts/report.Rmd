@@ -1,0 +1,677 @@
+---
+title: "TDP-43 Quantseq analysis"
+author: "A. M. Chakrabarti"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  html_document: 
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+    highlight: haddock
+    theme: flatly
+    number_sections: yes
+    code_folding: hide
+    fig_align: center
+---
+
+# Setup
+
+## Packages
+
+```{r}
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(DRIMSeq))
+suppressPackageStartupMessages(library(BiocParallel))
+suppressPackageStartupMessages(library(rtracklayer))
+suppressPackageStartupMessages(library(cluster))
+suppressPackageStartupMessages(library(zoo))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(cowplot))
+suppressPackageStartupMessages(library(ggthemes))
+suppressPackageStartupMessages(library(scales))
+# suppressPackageStartupMessages(library(viridis))
+suppressPackageStartupMessages(library(pheatmap))
+suppressPackageStartupMessages(library(RColorBrewer))
+suppressPackageStartupMessages(library(ggforce))
+suppressPackageStartupMessages(library(ggpubr))
+
+set.seed(42)
+```
+
+## Functions
+
+```{r}
+GetPairs <- function(x) {
+  
+  if(all(is.na(x$WT))) return(data.table()) # As some (2) are all NA for WT
+  
+  setorder(x, adj_pvalue, -WT) # Just to be sure
+  
+  if(nrow(x) > 2) {
+    
+    pas1 <- x[1]
+    pas2 <- x[2:.N]
+    pas2 <- pas2[WT * pas1$WT < 0] # Needs to go in opposite direction
+    if(pas1$WT > 0) setorder(pas2, WT) else setorder(pas2, -WT) # If 1 goes up need most negative, but it 1 goes down need most positive
+    pas <- rbind(pas1, pas2[1])
+    
+  } else {
+    
+    pas <- x
+    
+  }
+  
+  setorder(pas, start)
+  pas[, pas_type := ifelse(strand == "+", c("P", "D"), c("D", "P"))]
+  
+  return(pas)
+       
+}
+
+ImportiMapsBedgraph <- function(bedgraph.file) {
+  
+  bg <- import.bedGraph(bedgraph.file)
+  
+  # Assign strand based on score
+  strand(bg)[bg$score < 0] <- "-"
+  strand(bg)[bg$score > 0] <- "+"
+  
+  # Convert scores to positives now that strands assigned
+  bg$score <- abs(bg$score)
+  
+  return(bg)
+  
+}
+
+GetOverlap <- function(gr, selected.region.gr) {
+  
+  xlinks.gr <- unlist(tile(selected.region.gr, width = 1))
+  xlinks.gr$name <- rep(selected.region.gr$name, times = width(selected.region.gr))
+  
+  ol <- findOverlaps(xlinks.gr, gr)
+  xlinks.gr$score <- NA
+  xlinks.gr[queryHits(ol)]$score <- gr[subjectHits(ol)]$score
+  xlinks.gr$score[is.na(xlinks.gr$score)] <- 0
+  
+  return(xlinks.gr)
+  
+}
+
+NormaliseAndSmooth <- function(gr, total, window = 50) {
+  
+  dt <- as.data.table(gr)
+  dt[, xpm := (score * 1e6)/total] # normalise to xpm
+  dt[, rollmean_xpm := rollmean(xpm, k = window, fill = 0), by = name] # smooth
+  dt[rollmean_xpm < 0, rollmean_xpm := 0] # some dip below 0 ?
+  dt[, coord := ifelse(strand == "+", 1:.N, .N:1), by = name] # adjust coordinates based on strand
+  
+  return(dt)
+  
+}
+
+PlotCLIPRatioBoxplot <- function(span.gr, wt.bed, del.bed, wt.name, del.name) {
+  
+  if(grepl("bedgraph", wt.bed)) {
+    
+    wt.gr <- ImportiMapsBedgraph(wt.bed)
+    del.gr <- ImportiMapsBedgraph(del.bed)
+    
+  } else {
+  
+    wt.gr <- import.bed(wt.bed)
+    del.gr <- import.bed(del.bed)
+    
+  }
+  
+  wt.total <- sum(wt.gr$score)
+  del.total <- sum(del.gr$score)
+  
+  all.wt.gr <- GetOverlap(gr = wt.gr, span.gr)
+  all.del.gr <- GetOverlap(gr = del.gr, span.gr)
+  
+  all.wt.dt <- NormaliseAndSmooth(all.wt.gr, total = wt.total)
+  all.del.dt <- NormaliseAndSmooth(all.del.gr, total = del.total)
+  
+  all.sum.wt.dt <- all.wt.dt[, sum(xpm), by = name]
+  all.sum.del.dt <- all.del.dt[, sum(xpm), by = name]
+  
+  all.wt_del.dt <- merge(all.sum.wt.dt, all.sum.del.dt, by = "name")
+  all.wt_del.dt[, del_wt_ratio := log2(V1.y/V1.x), by = name]
+  
+  return(all.wt_del.dt[, exp := del.name])
+         
+}
+```
+
+## Colours
+
+```{r}
+cr_colours <- c("CR-dependent" = "#F28E2B", "CR-independent" = "#4E79A7")
+mutant_colours <- c(WT = "#008000", delUCR = "#FF0000", `316del346` = "#FF0000", G294A = "#808000", A326P = "#FF8000", Q331K = "#FF0080", G335A = "#0080FF", M337P = "#800040")
+```
+
+# PolyA site identification
+
+We have identified our representative polyA sites based on the Quantseq FWD reads that have read into the polyA tail across all experimental conditions under study. Putative polyA sites within 200 nt of each other are merged, taking the site with the highest read count, with ties broken by selecting the 3' most site.
+
+Random priming artefacts have been filtered based on the A content in the 20 nt 5' of the polyA site, with a varying maximum threshold dependent on the presence of a polyA signal in the 40 nt 5' of the polyA site:
+
+  - Canonical motifs (AATAAA or ATTAAA): 50%
+  - Alternative motifs (from Herzog et al.): 40%
+  - No motif: 30%
+
+For this analysis we only keep those that are annotated as 3' UTR (which includes those that are 1 kb downstream of an annotated 3' UTR).
+
+To demonstrate the validity of our sites, we can examine the overlap with those in the PolyASite v2.0 database.
+
+```{r}
+pas.dt <- fread(params$pas, col.names = c("seqnames", "start", "end", "id", "score", "strand", "ensg", "hgnc", "region"))
+pas.dt <- pas.dt[region == "UTR3"]
+pas.dt[, multi := .N, by = ensg]
+pas.gr <- GRanges(pas.dt)
+
+zavolan.dt <- fread(params$polyasite2, select = 1:13) # NB start and end are 1 based, judging from comparing to BED file
+zavolan.gr <- GRanges(zavolan.dt)
+seqlevelsStyle(zavolan.gr) <- "UCSC"
+
+extended.pas.gr <- resize(resize(pas.gr, width = 1 + 100, fix = "start"), width = 1 + 100 + 100, fix = "end")
+
+tiled.gr <- unlist(tile(extended.pas.gr, width = 1))
+tiled.gr$id <- rep(extended.pas.gr$id, each = 201)
+
+# Add coordinate around PAS
+tiled.gr$coord <- as.integer(NA)
+tiled.gr[strand(tiled.gr) == "+"]$coord <- -100:100
+tiled.gr[strand(tiled.gr) == "-"]$coord <- 100:-100
+
+ol <- findOverlaps(tiled.gr, zavolan.gr)
+stopifnot(all(!duplicated(queryHits(ol)))) # Check to make sure each position only overlaps once
+
+tiled.gr$score <- 0
+tiled.gr[queryHits(ol)]$score <- 1
+
+tiled.dt <- as.data.table(tiled.gr)[, .(coord, score)]
+
+tiled.dt[, `:=` (mean_score = mean(score),
+                 sd_score = sd(score),
+                 sem_score = sd(score)/.N^1/2), by = coord]
+tiled.dt <- unique(tiled.dt[, .(coord, mean_score, sd_score, sem_score)])
+
+p <- ggplot(tiled.dt, aes(x = coord, y = mean_score)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = mean_score - sem_score, ymax = mean_score + sem_score), fill = "black") +
+  theme_minimal_grid() +
+  labs(title = "PolyASite v2.0 sites around polyA sites",
+       x = "Position relative to polyA site",
+       y = "Mean coverage") +
+  scale_y_continuous(label = percent)
+
+ggsave(p, filename = "results/plots/polyAsite_overlap.pdf", width = 6, height = 4)
+
+p
+```
+
+# Differential polyA site usage
+
+To test for differential polyA site usage, we use DRIMseq. This enables us to assess changes in the relative usage of multiple polyA sites for a given gene. We combine two batches of experiments which include the following mutants:
+
+1. The first resequenced set (used in the submitted manuscript):
+    - delUCR
+    - A326P
+    - M337P
+    - Q331K
+    - G294A
+    - G335A
+    - WT
+2. The revision experiments:
+    - delUCR
+    - A326P
+    - M337P
+    - G335A
+    - WT
+  
+The two compared conditions are:
+
+  1. knockdown of TDP-43
+  2. rescue with the mutant
+
+The first batch was carried out with 3 replicates per condition and the second with 6 replicates per condition. As before, the following replicates were removed from the first batch owing to very low read counts due to technical difficulties:
+
+  - WT_neg_siTDP1_2
+  - M337P_pos_siTDP1_2
+  - G335A_neg_siTDP1_1
+  - G294A_pos_siTDP1_1
+  - A326P_neg_siTDP1_3
+  
+For the differential analysis, the following expression thresholds were applied:
+
+  - Minimum gene expression: 10
+  - Minimum polyA site expression: 5
+  - Minimum number of samples with the gene expressed: 75% of all samples
+  - Minimum number of samples with the poly site expression: 75% of either knockdown or rescue (whichever value was lower)
+  
+After initial analysis, it was evident that there was a batch effect between the two sets of experiments. Therefore, the batch was also included as a co-variate in the model where it was present.
+
+## Statistically significant sites
+
+For statistical significance, we used an adjusted p-value threshold of 0.05, and required a gene to be significant with any of the mutant rescues.
+
+```{r}
+drimseq.files <- params$rds
+drimseq.list <- lapply(drimseq.files, readRDS)
+names(drimseq.list) <- sapply(strsplit(basename(drimseq.files), "\\."), "[[", 1)
+
+drim.genes.list <- lapply(drimseq.list, function(d) {
+  
+    res <- results(d, level = "gene")
+    res <- res[!is.na(res$adj_pvalue), ]
+    res <- res[res$adj_pvalue < 0.05, ]
+    return(res$gene_id)
+  
+})
+sig.genes <- unique(unlist(drim.genes.list))
+sig.genes <- grep("TARDBP", sig.genes, invert = TRUE, value = TRUE) # Remove TARDBP as this was KD
+```
+
+There are `r length(sig.genes)` significant genes.
+
+## Biologically significant sites
+
+Next we calculated the fitted proportional usage of each polyA site (PAU) and the change in usage (dPAU) as PAU~rescue~ - PAU~control~.
+
+```{r}
+drim.prop.list <- lapply(drimseq.list, proportions)
+drim.prop.dt <- data.table(Reduce(function(x, y) merge(x = x, y = y, by = c("gene_id", "feature_id"), all = TRUE), drim.prop.list))
+drim.prop.dt <- drim.prop.dt[, .(gene_id, feature_id,
+                                 A326P_neg_siTDP1_1, A326P_pos_siTDP1_1,
+                                 delUCR_neg_siTDP1_1, delUCR_pos_siTDP1_1,
+                                 G294A_neg_siTDP1_1, G294A_pos_siTDP1_2,
+                                 G335A_neg_siTDP1_2, G335A_pos_siTDP1_1,
+                                 M337P_neg_siTDP1_1, M337P_pos_siTDP1_1,
+                                 Q331K_neg_siTDP1_1, Q331K_pos_siTDP1_1,
+                                 WT_neg_siTDP1_1, WT_pos_siTDP1_1)]
+
+# Get deltas
+drim.prop.dt <- melt.data.table(drim.prop.dt, id.vars = c("gene_id", "feature_id"))
+drim.prop.dt[, `:=` (mutant = sapply(strsplit(as.character(variable), "\\_"), "[[", 1),
+                    rescue = sapply(strsplit(as.character(variable), "\\_"), "[[", 2))]
+dpau.dt <- merge(drim.prop.dt[rescue == "pos"], drim.prop.dt[rescue == "neg"], by = c("gene_id", "feature_id", "mutant"))
+dpau.dt[, dpau := value.x - value.y] # rescue - kd
+
+sig.genes2 <- unique(dpau.dt[gene_id %in% sig.genes][abs(dpau) > 0.1]$gene_id)
+sel.dpau.dt <- dpau.dt[gene_id %in% sig.genes2]
+sel.dpau.cast.dt <- dcast.data.table(sel.dpau.dt, feature_id ~ mutant, value.var = "dpau")
+```
+
+Applying a biological significance threshold of dPAU > 10% with any mutant rescue, leaves `r length(sig.genes2)` significant genes.
+
+## Selecting a representative site for each gene
+
+To identify patterns of regulation, we need to select a representative polyA site for each gene (as there will be at least 2 sites that change proportions, by definition). To do so, we select the polyA site based on the following simple hierarchy:
+
+1. The lowest adjusted p-value
+2. The greatest PAU in any mutant in any condition
+
+```{r}
+drim.results.list <- lapply(drimseq.list, function(d) {
+  
+    res <- results(d, level = "feature")
+    res <- res[order(res$pvalue, decreasing = FALSE), ]
+  
+})
+
+drim.dt <- rbindlist(drim.results.list)
+drim.dt$exp <- rep(names(drim.results.list), elementNROWS(drim.results.list))
+
+# Minimum adjusted p-value
+drim.dt <- drim.dt[!is.na(adj_pvalue)]
+sel.drim.dt <- drim.dt[gene_id %in% sig.genes2][, min_padj := min(adj_pvalue), by = "gene_id"]
+sel.drim.dt <- sel.drim.dt[adj_pvalue == min_padj]
+stopifnot(all(sig.genes2 %in% sel.drim.dt$gene_id))
+
+# Maximum dPAU
+stopifnot(all(drim.dt$feature_id %in% drim.prop.dt$feature_id))
+drim.prop.dt <- drim.prop.dt[!is.na(value)] # Removes PAS with NA scores
+max.prop.dt <- drim.prop.dt[, max(value), by = .(feature_id, gene_id)]
+setnames(max.prop.dt, "V1", "max_prop")
+
+sel.drim.dt <- merge(sel.drim.dt, max.prop.dt, by = c("feature_id", "gene_id"))
+sel.drim.dt[, gene_max_prop := max(max_prop, na.rm = TRUE), by = "gene_id"]
+sel.drim.dt <- sel.drim.dt[max_prop == gene_max_prop]
+
+stopifnot(all(sig.genes2 %in% sel.drim.dt$gene_id)) # Check all significant genes are still there
+stopifnot(!all(duplicated(sel.drim.dt$gene_id))) # Check there is only one entry per gene
+
+# Add in dPAU
+sel.drim.dt <- merge(sel.drim.dt, sel.dpau.cast.dt, by = "feature_id")
+sel.drim.dt[, hgnc := sapply(strsplit(gene_id, "_"), "[[", 1)]
+```
+
+## Patterns of polyA site regulation across mutant rescues
+
+First we filter out genes for which no PAU could be calculated for the representative site in any mutant rescue to ensure only robust patterns are identified.
+
+```{r}
+dpau.mat <- as.matrix(sel.drim.dt[, .(delUCR, A326P, M337P, Q331K, G294A, G335A, WT)])
+rownames(dpau.mat) <- sel.drim.dt$hgnc
+dpau.mat <- dpau.mat[apply(dpau.mat, 1, function(x) !any(is.na(x))), ]
+dpau.mat[is.na(dpau.mat)] <- 0
+
+# Relative to WT
+pos.dpau.mat <- dpau.mat[dpau.mat[, "WT"] >= 0, ]
+neg.dpau.mat <- dpau.mat[dpau.mat[, "WT"] < 0, ]
+neg.dpau.mat <- t(apply(neg.dpau.mat, 1, function(x) x*-1))
+mod.dpau.mat <- rbind(pos.dpau.mat, neg.dpau.mat)
+```
+
+This leaves us with `r nrow(dpau.mat)` genes. We also adjust dPAU such that it is always positive in WT for the representative site.
+
+We cluster genes based on:
+
+1. The relative dPAU between WT and delUCR
+2. The absolute dPAU between WT and delUCR
+
+Both are scaled so as to be equally weighted. We use partitioning around medoids (k-mediods clustering) as it is less sensitive to outliers compared to k-means clustering. We calculate the optimal number of clusters using the average silhouette method.
+
+```{r}
+# Clustering matrix
+clust.mat <- cbind(mod.dpau.mat[, 'WT']/mod.dpau.mat[, 'delUCR'],
+                   mod.dpau.mat[, 'WT']-mod.dpau.mat[, 'delUCR'])
+clust.mat <- scale(clust.mat)
+
+p <- factoextra::fviz_nbclust(clust.mat, FUNcluster = pam, method = "silhouette", k.max = 5)
+p + theme_minimal_grid()
+
+k.pam <- pam(scale(clust.mat), k = 2, metric = "euclidean", stand = TRUE)
+
+annot.df <- data.frame(k.pam$clustering)
+annot.df$type <- ifelse(annot.df$k.pam.clustering == 1, "CR-independent", "CR-dependent")
+annot.df$k.pam.clustering <- NULL
+
+annot_colours <- list(type = cr_colours)
+```
+
+This identifies two main clusters in our data:
+
+1. CR-independent: `r sum(annot.df$type == "CR-independent")`
+2. CR-dependent: `r sum(annot.df$type == "CR-dependent")`
+
+Within each cluster, I have used Ward D2 hierarchical clustering of the dPAUs for all mutant rescues to aid visualisation.
+
+```{r, fig.height=20, fig.width = 10}
+stopifnot(all(rownames(annot.df) == rownames(mod.dpau.mat))) # Ensure they are lined up, before adjusting rows
+annot.order <- rownames(annot.df)[order(annot.df$type, decreasing = TRUE)]
+
+mod.dpau.mat <- mod.dpau.mat[match(annot.order, rownames(mod.dpau.mat)), ]
+stopifnot(all(rownames(mod.dpau.mat) == annot.order))
+
+# Hierachical clustering within groups for visualisation
+hc1 <- hclust(dist(mod.dpau.mat[rownames(mod.dpau.mat) %in% rownames(annot.df)[annot.df$type == "CR-independent"], ]), method = "ward.D2")
+hc2 <- hclust(dist(mod.dpau.mat[rownames(mod.dpau.mat) %in% rownames(annot.df)[annot.df$type == "CR-dependent"], ]), method = "ward.D2")
+hc <- as.hclust(merge(as.dendrogram(hc1), as.dendrogram(hc2)))
+
+# Set colour scale so symmetrical about 0
+ends <- max(c(abs(min(mod.dpau.mat, na.rm = TRUE)), max(mod.dpau.mat, na.rm = TRUE)), na.rm = TRUE)
+
+pheatmap(mod.dpau.mat, scale = "none",
+         cluster_cols = FALSE, cluster_rows = hc,
+         cutree_rows = 2,
+         color = colorRampPalette(rev(brewer.pal(n = 9, name = "RdBu")))(100),
+         breaks = seq(-ends, ends, length.out = 101),
+         show_rownames = TRUE,
+         border_color = NA,
+         annotation_row = annot.df,
+         annotation_colors = annot_colours)
+```
+
+We can also summarise the patterns across the two groups.
+
+```{r, fig.width = 10}
+type.dt <- data.table(annot.df, keep.rownames = TRUE)
+setnames(type.dt, "rn", "hgnc")
+
+mod.dpau.dt <- as.data.table(mod.dpau.mat, keep.rownames = TRUE)
+setnames(mod.dpau.dt, "rn", "hgnc")
+mod.dpau.dt[hgnc %in% type.dt[type == "CR-independent"]$hgnc, type := "CR-independent"]
+mod.dpau.dt[hgnc %in% type.dt[type == "CR-dependent"]$hgnc, type := "CR-dependent"]
+mod.dpau.dt <- melt.data.table(mod.dpau.dt, id.vars = c("hgnc", "type"))
+
+mod.dpau.dt$variable <- factor(mod.dpau.dt$variable, levels = c("delUCR", "A326P", "M337P", "Q331K", "G294A", "G335A", "WT"))
+  
+p <- ggplot(mod.dpau.dt, aes(x = variable, y = value, colour = variable)) +
+  geom_sina(alpha = 0.5) + geom_boxplot(fill = NA, outlier.shape = NA) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  facet_grid(. ~ type) +
+  labs(title = "polyA site regulation summary",
+        x = "Mutant",
+       y = "dPAU",
+       colour = "") +
+  scale_color_manual(values = mutant_colours) +
+  theme_minimal_grid() + theme(legend.position = "none")
+
+p
+```
+
+# Integrate polyA site regulation with TDP-43 binding
+
+To integrate the regulated polyA sites on a gene with TDP-43 binding, we select pairs of polyA sites based on the WT statistical significance and PAU.
+
+  - The primary site is the one with the lowest adjusted p-value.
+  - The paired site is the most significant one with the largest direction of change in the opposite direction to the primary site.
+
+```{r}
+wt.dt <- drim.dt[exp == "WT"]
+wt.dt <- wt.dt[gene_id %in% sig.genes2]
+wt.dt <- merge(wt.dt, sel.dpau.cast.dt[, .(feature_id, WT)], by = "feature_id")
+wt.dt <- merge(wt.dt, pas.dt, by.x = "feature_id", by.y = "id")
+
+wt.list <- split(wt.dt, by = "gene_id")
+pairs.list <- lapply(wt.list, GetPairs)
+pairs.dt <- rbindlist(pairs.list)
+stopifnot(all(pairs.dt[, .N, by = gene_id]$N == 2))
+```
+
+## TDP-43 binding overview
+
+We examine the ratio of CLIP binding in the region spanning the two sites ± 100 nt.
+
+```{r}
+type.dt <- data.table(annot.df, keep.rownames = TRUE)
+setnames(type.dt, "rn", "hgnc")
+
+pairs.dt <- merge(pairs.dt, type.dt, by = "hgnc")
+
+pairs.gr <- GRanges(pairs.dt)
+pairs.grl <- split(pairs.gr, pairs.gr$hgnc)
+pairs.grl <- GRangesList(lapply(pairs.grl, reduce, min.gapwidth = 1e6))
+stopifnot(all(elementNROWS(pairs.grl) == 1))
+span.gr <- unlist(pairs.grl)
+span.gr$hgnc <- names(span.gr)
+names(span.gr) <- NULL
+span.gr <- resize(span.gr, width = width(span.gr) + 100 + 100, fix = "center") # add 100 nt either side
+
+span.gr$type <- as.character(NA)
+span.gr[span.gr$hgnc %in% type.dt[type == "CR-independent"]$hgnc]$type <- "CR-independent"
+span.gr[span.gr$hgnc %in% type.dt[type == "CR-dependent"]$hgnc]$type <- "CR-dependent"
+span.gr$name <- span.gr$hgnc
+```
+
+First we look at the WT1 and DEL1 merged experiments (Fig. 6E) - WT v. delUCR in the 2,5-hexanediol condition.
+
+```{r}
+del.dt <- PlotCLIPRatioBoxplot(wt.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/WT1.bed.gz",
+                     wt.name = "WT",
+                     del.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/DEL1.bed.gz",
+                     del.name = "316del346",
+                     span.gr = span.gr)
+
+del.dt[name %in% type.dt[type == "CR-independent"]$hgnc, type := "CR-independent"]
+del.dt[name %in% type.dt[type == "CR-dependent"]$hgnc, type := "CR-dependent"]
+
+p <- ggplot(del.dt, aes(x = type, y = del_wt_ratio, colour = type)) +
+  geom_sina(alpha = 0.5) + geom_boxplot(fill = NA, outlier.shape = NA) +
+  stat_compare_means(comparisons = list(c("CR-independent", "CR-dependent")), method = "wilcox.test") +
+  labs(title = "CLIP coverage",
+       x = "Type",
+       y = paste0("log2(normalised delUCR coverage/\nnormalised WT coverage)"),
+       colour = "") +
+  scale_color_manual(values = cr_colours) +
+  theme_minimal_grid() + theme(legend.position = "none")
+
+p
+```
+
+We can also look at the WT2 and DEL2 merged experiments - WT & G335A v. delUCR & A326P with no hexanediol
+
+```{r}
+del.dt <- PlotCLIPRatioBoxplot(wt.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/WT2.bed.gz",
+                     wt.name = "WT",
+                     del.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/DEL2.bed.gz",
+                     del.name = "316del346",
+                     span.gr = span.gr)
+
+del.dt[name %in% type.dt[type == "CR-independent"]$hgnc, type := "CR-independent"]
+del.dt[name %in% type.dt[type == "CR-dependent"]$hgnc, type := "CR-dependent"]
+
+p <- ggplot(del.dt[!is.infinite(del_wt_ratio)][!is.na(del_wt_ratio)], aes(x = type, y = del_wt_ratio, colour = type)) +
+  geom_sina(alpha = 0.5) + geom_boxplot(fill = NA, outlier.shape = NA) +
+  stat_compare_means(comparisons = list(c("CR-independent", "CR-dependent")), method = "wilcox.test") +
+  labs(title = "CLIP coverage",
+       x = "Type",
+       y = paste0("log2(normalised delUCR coverage/\nnormalised WT coverage)"),
+       colour = "") +
+  scale_color_manual(values = cr_colours) +
+  theme_minimal_grid() + theme(legend.position = "none")
+
+p
+```
+
+Next we can examine the ratios for all the mutant rescues to identify any trends (Fig. 6F). Here we use the merged "20181001" experiments.
+
+```{r}
+# 20181001
+p.del <- PlotCLIPRatioBoxplot(wt.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/tardbp-egfp-hek293-3_4_merged-20181001-ju_trimmed_single.bedgraph.gz",
+                     wt.name = "WT",
+                     del.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/tardbp-316del346-egfp-hek293-3_4_merged-20181001-ju_trimmed_single.bedgraph.gz",
+                     del.name = "316del346",
+                     span.gr = span.gr)
+
+p.a326p <- PlotCLIPRatioBoxplot(wt.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/tardbp-egfp-hek293-3_4_merged-20181001-ju_trimmed_single.bedgraph.gz",
+                     wt.name = "WT",
+                     del.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/tardbp-a326p-egfp-hek293-3_4_merged-20181001-ju_trimmed_single.bedgraph.gz",
+                     del.name = "A326P",
+                     span.gr = span.gr)
+
+p.g294a <- PlotCLIPRatioBoxplot(wt.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/tardbp-egfp-hek293-3_4_merged-20181001-ju_trimmed_single.bedgraph.gz",
+                     wt.name = "WT",
+                     del.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/tardbp-g294a-egfp-hek293-3_4_merged-20181001-ju_trimmed_single.bedgraph.gz",
+                     del.name = "G294A",
+                     span.gr = span.gr)
+
+p.g335a <- PlotCLIPRatioBoxplot(wt.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/tardbp-egfp-hek293-3_4_merged-20181001-ju_trimmed_single.bedgraph.gz",
+                     wt.name = "WT",
+                     del.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/tardbp-g335a-egfp-hek293-3_4_merged-20181001-ju_trimmed_single.bedgraph.gz",
+                     del.name = "G335A",
+                     span.gr = span.gr)
+
+p.m337p <- PlotCLIPRatioBoxplot(wt.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/tardbp-egfp-hek293-3_4_merged-20181001-ju_trimmed_single.bedgraph.gz",
+                     wt.name = "WT",
+                     del.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/tardbp-m337p-egfp-hek293-3_4_merged-20181001-ju_trimmed_single.bedgraph.gz",
+                     del.name = "M337P",
+                     span.gr = span.gr)
+
+p.q331k <- PlotCLIPRatioBoxplot(wt.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/tardbp-egfp-hek293-3_4_merged-20181001-ju_trimmed_single.bedgraph.gz",
+                     wt.name = "WT",
+                     del.bed = "/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/tardbp-q331k-egfp-hek293-3_4_merged-20181001-ju_trimmed_single.bedgraph.gz",
+                     del.name = "Q331K",
+                     span.gr = span.gr)
+```
+
+```{r, fig.width=10}
+mutants.dt <- rbind(p.del, p.a326p, p.g294a, p.g335a, p.m337p, p.q331k)
+mutants.dt$exp <- factor(mutants.dt$exp, levels = c("316del346", "A326P", "M337P", "Q331K", "G294A", "G335A"))
+
+mutants.dt[name %in% type.dt[type == "CR-independent"]$hgnc, type := "CR-independent"]
+mutants.dt[name %in% type.dt[type == "CR-dependent"]$hgnc, type := "CR-dependent"]
+
+p <- ggplot(mutants.dt[!is.infinite(del_wt_ratio)][!is.na(del_wt_ratio)], aes(x = exp, y = del_wt_ratio, colour = exp)) +
+  geom_sina(alpha = 0.5) + geom_boxplot(fill = NA, outlier.shape = NA) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  stat_compare_means(label.y = 3) +
+  facet_grid(. ~ type) +
+  labs(title = "CLIP coverage",
+       x = "Mutant",
+       y = paste0("log2(normalised mutant coverage/\nnormalised wild-type coverage)"),
+       colour = "") +
+  scale_color_manual(values = mutant_colours) +
+  theme_minimal_grid() + theme(legend.position = "none")
+
+p
+
+if(interactive()) ggsave(p, filename = "plots/mutant_boxplots.pdf", height = 5, width = 12)
+```
+
+## CR-dependence and motif groups
+
+We can also look at the coverage of the three motif groups in the same region (Fig. 6 G, H, I):
+
+  - UGYG (g1 & g2 coverage)
+  - UGYA (g3 coverage)
+  - UGAA (g4 coverage)
+
+```{r, fig.width = 10}
+ju.clip.dt <- suppressMessages(data.table(readxl::read_xlsx("/camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/iclip/rfiltered_merged30_table_fixed_normalised ju 260120.xlsx")))
+
+ju.clip.gr <- with(ju.clip.dt, GRanges(seqnames = chrom,
+                                       ranges = IRanges(start = start + 1, end = end),
+                                       strand = strand,
+                                       peak_id = id,
+                                       threshold = threshold...56,
+                                       length = length,
+                                       g1_g2_coverage = `g1+2 coverage`,
+                                       g3_coverage = `g3 coverage`,
+                                       g4_coverage = `g4 coverage`,
+                                       total_motifs = `total motifs`,
+                                       total_overlap = `total overlap`,
+                                       overlap_g1 = `overlap_g1`,
+                                       overlap_g2 = `overlap_g2`,
+                                       overlap_g4 = `overlap_g4`))
+
+ol <- findOverlaps(ju.clip.gr, span.gr)
+# table(1:length(span.gr) %in% subjectHits(ol))
+
+sel.clip.gr <- ju.clip.gr[queryHits(ol)]
+sel.clip.gr$type <- span.gr[subjectHits(ol)]$type
+sel.clip.gr$gene <- span.gr[subjectHits(ol)]$name
+
+sel.clip.dt <- as.data.table(mcols(sel.clip.gr))[, .(type, gene, g1_g2_coverage, g3_coverage, g4_coverage)]
+setnames(sel.clip.dt, c("g1_g2_coverage", "g3_coverage", "g4_coverage"), c("UGYG", "UGYA", "UGAA"))
+sel.clip.melted.dt <- melt.data.table(sel.clip.dt, id.vars = c("type", "gene"))
+
+sel.clip.sum.dt <- sel.clip.melted.dt[, sum(value), by = .(type, gene, variable)]
+sel.clip.sum.dt[, coverage := V1]
+sel.clip.sum.dt[coverage > 200, coverage := 200]
+
+p <- ggplot(sel.clip.sum.dt[V1 > 0], aes(x = type, y = V1)) +
+  geom_violin(aes(fill = type)) + geom_boxplot(fill = "white", width = 0.1, outlier.shape = NA) +
+  # coord_cartesian(ylim = c(0, 250)) +
+  stat_compare_means(label.x = 1.75, label.y = log10(500)) +
+  facet_grid(. ~ variable) +
+  labs(title = "Motif group coverage",
+       x = "Type",
+       y = "Motif coverage",
+       colour = "") +
+  scale_fill_manual(values = cr_colours) +
+  scale_y_log10() +
+  theme_minimal_grid() + theme(legend.position = "none")
+
+p
+```
+
+Of note, `r sum(!1:length(span.gr) %in% subjectHits(ol))` regions did not have any CLIP coverage and so were filtered from this analysis.
+
+# R session
+
+```{r}
+sessionInfo()
+```

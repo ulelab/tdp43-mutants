@@ -1,0 +1,85 @@
+# Quantseq pipeline
+# A. M. Chakrabarti
+# revised 13th March 2021
+
+# sbatch -N 1 -J quantseq -t 48:00:00 -o quantseq_%A.out --wrap="time snakemake --use-singularity -k --cluster 'sbatch {params.cluster}' --jobs 200 --latency-wait 60"
+
+# Import config file & parameters
+configfile: 'config.yaml'
+
+# ==========
+# Endgame
+# ==========
+
+rule all:
+    input:
+        # expand("results/fastqc/{sample}_fastqc.html", sample=config["samples"]),
+        expand("results/salmon/{sample}/quant.sf", sample=config["samples"]),
+
+# ==========
+# Preprocessing steps
+# ==========
+
+rule fastqc:
+    input:
+        lambda wildcards: config["samples"][wildcards.sample]
+    output:
+        html="results/fastqc/{sample}_fastqc.html",
+        fczip=temp("results/fastqc/{sample}_fastqc.zip")
+    params:
+        fc="--outdir results/fastqc",
+        cluster="-J fastqc -N 1 --mem=16G -t 12:00:00 -o logs/fastqc.{sample}.%A.log"
+    run:
+        shell("fastqc {input} {params.fc}")
+        fastqc_out = "/".join(("results/fastqc", os.path.basename(input[0])))
+        fastqc_out = "_".join((fastqc_out, "fastqc.html"))
+        fastqc_out = fastqc_out.replace(".fastq.gz","")
+        shell("echo {fastqc_out}")
+        shell("mv {fastqc_out} {output.html}")
+
+# Remove adapters
+rule cutadapt:
+    input:
+        lambda wildcards: config["samples"][wildcards.sample]
+    output:
+        trimmed=temp("results/cutadapt/{sample}_trimmed.fastq.gz"),
+        polyAtrimmedfastq="results/cutadapt/{sample}.polya.trimmed.fastq.gz",
+    params:
+        log="results/cutadapt/{sample}_trimming_report.txt",
+        cluster="-J cutadapt -N 1 -c 8 --mem=16G -t 12:00:00 -o logs/cutadapt.{sample}.%A.log"
+    threads:
+        8
+    shell:
+        """
+        cutadapt -j {threads} -q 10 -m 18 -a AGATCGGAAGAGC -o {output.trimmed} {input}
+        cutadapt -j {threads} -m 18 --no-indels -e 0 -a "A{{1000}}" -o {output.polyAtrimmedfastq} {output.trimmed}
+        """
+
+# ==========
+# SalmonQuantification
+# ==========
+
+# Then trim off the polyA tail and map
+rule quantSalmon:
+    input:
+        fastq="results/cutadapt/{sample}.polya.trimmed.fastq.gz"
+    output:
+        sf="results/salmon/{sample}/quant.sf"
+    params:
+        salmon_index=config['salmon_index'],
+        gtf=config['gtf'],
+        outprefix="results/salmon/{sample}",
+        cluster="-J quantSalmon -N 1 -c 8 --mem-per-cpu=4GB -t 24:00:00 -o logs/quantSalmon.{sample}.%A.log"
+    threads:
+        8
+    shell:
+        """
+        salmon quant \
+        --geneMap {params.gtf} \
+        --threads {threads} \
+        --noLengthCorrection \
+        --libType=SF \
+        --index {params.salmon_index} \
+        -r {input.fastq} \
+        -o {params.outprefix}
+        """

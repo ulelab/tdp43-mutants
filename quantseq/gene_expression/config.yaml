@@ -1,0 +1,41 @@
+# Config for Martina's Quantseq (gene expression)
+# A. M. Chakrabarti
+# revised 13th March 2021
+
+samples:
+
+    A326P_neg_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/A326P.1.fastq.gz
+    G294A_neg_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G294A.1.fastq.gz
+    G335A_neg_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G335A.1.fastq.gz
+    M337P_neg_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/M337P.1.fastq.gz
+    Q331K_neg_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/Q331K.1.fastq.gz
+    delUCR_neg_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/delUCR.1.fastq.gz
+    WT_neg_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/WT_1.1.fastq.gz
+    WT_neg_nosiTDP_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/WT_2.1.fastq.gz
+    WT_neg_nosiTDP_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/WT_3.1.fastq.gz
+    A326P_pos_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/A326Ppos_1.1.fastq.gz
+    A326P_pos_nosiTDP_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/A326Ppos_2.1.fastq.gz
+    A326P_pos_nosiTDP_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/A326Ppos_3.1.fastq.gz
+    G294A_pos_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G294Apos_1.1.fastq.gz
+    G294A_pos_nosiTDP_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G294Apos_2.1.fastq.gz
+    G294A_pos_nosiTDP_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G294Apos_3.1.fastq.gz
+    G335A_pos_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G335Apos_1.1.fastq.gz
+    G335A_pos_nosiTDP_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G335Apos_2.1.fastq.gz
+    G335A_pos_nosiTDP_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G335Apos_3.1.fastq.gz
+    M337P_pos_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/M337Ppos_1.1.fastq.gz
+    M337P_pos_nosiTDP_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/M337Ppos_2.1.fastq.gz
+    M337P_pos_nosiTDP_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/M337Ppos_3.1.fastq.gz
+    Q331K_pos_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/Q331Kpos_1.1.fastq.gz
+    Q331K_pos_nosiTDP_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/Q331Kpos_2.1.fastq.gz
+    Q331K_pos_nosiTDP_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/Q331Kpos_3.1.fastq.gz
+    delUCR_pos_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/delUCRpos_1.1.fastq.gz
+    delUCR_pos_nosiTDP_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/delUCRpos_2.1.fastq.gz
+    delUCR_pos_nosiTDP_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/delUCRpos_3.1.fastq.gz
+    WT_pos_nosiTDP_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/WTpos_1.1.fastq.gz
+    WT_pos_nosiTDP_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/WTpos_2.1.fastq.gz
+    WT_pos_nosiTDP_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/WTpos_3.1.fastq.gz
+
+# Indices
+salmon_index: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202103_TDP43_induction_effect/ref/salmon_index
+gtf: /camp/lab/luscomben/home/users/chakraa2/projects/flora/ref/human/gencode.v33.annotation.gtf.gz 
+

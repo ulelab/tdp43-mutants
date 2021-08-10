@@ -1,0 +1,140 @@
+# Config for Martina's Quantseq 20200827_PM19083
+# A. M. Chakrabarti
+# 3rd September 2020, revised 15th January 2021
+
+mutants: ['A326P', 'delUCR', 'G294A', 'G335A', 'M337P', 'Q331K', 'WT']
+
+samples:
+
+    # Revision experiments
+
+    A326P_neg_siTDP2_1: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/A326Pneg_siT_1.1.fastq.gz
+    A326P_neg_siTDP2_2: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/A326Pneg_siT_2.1.fastq.gz
+    A326P_neg_siTDP2_3: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/A326Pneg_siT_3.1.fastq.gz
+    A326P_neg_siTDP2_4: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/A326Pneg_siT_4.1.fastq.gz
+    A326P_neg_siTDP2_5: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/A326Pneg_siT_5.1.fastq.gz
+    A326P_neg_siTDP2_6: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/A326Pneg_siT_6.1.fastq.gz
+    A326P_pos_siTDP2_1: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/A326Ppos_siT_1.1.fastq.gz
+    A326P_pos_siTDP2_2: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/A326Ppos_siT_2.1.fastq.gz
+    A326P_pos_siTDP2_3: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/A326Ppos_siT_3.1.fastq.gz
+    A326P_pos_siTDP2_4: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/A326Ppos_siT_4.1.fastq.gz
+    A326P_pos_siTDP2_5: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/A326Ppos_siT_5.1.fastq.gz
+    A326P_pos_siTDP2_6: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/A326Ppos_siT_6.1.fastq.gz
+    delUCR_neg_siTDP2_1: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/delUCRneg_siT_1.1.fastq.gz
+    delUCR_neg_siTDP2_2: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/delUCRneg_siT_2.1.fastq.gz
+    delUCR_neg_siTDP2_3: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/delUCRneg_siT_3.1.fastq.gz
+    delUCR_neg_siTDP2_4: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/delUCRneg_siT_4.1.fastq.gz
+    delUCR_neg_siTDP2_5: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/delUCRneg_siT_5.1.fastq.gz
+    delUCR_neg_siTDP2_6: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/delUCRneg_siT_6.1.fastq.gz
+    delUCR_pos_siTDP2_1: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/delUCRpos_siT_1.1.fastq.gz
+    delUCR_pos_siTDP2_2: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/delUCRpos_siT_2.1.fastq.gz
+    delUCR_pos_siTDP2_3: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/delUCRpos_siT_3.1.fastq.gz
+    delUCR_pos_siTDP2_4: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/delUCRpos_siT_4.1.fastq.gz
+    delUCR_pos_siTDP2_5: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/delUCRpos_siT_5.1.fastq.gz
+    delUCR_pos_siTDP2_6: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/delUCRpos_siT_6.1.fastq.gz
+    G335A_neg_siTDP2_1: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/G335Aneg_siT_1.1.fastq.gz
+    G335A_neg_siTDP2_2: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/G335Aneg_siT_2.1.fastq.gz
+    G335A_neg_siTDP2_3: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/G335Aneg_siT_3.1.fastq.gz
+    G335A_neg_siTDP2_4: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/G335Aneg_siT_4.1.fastq.gz
+    G335A_neg_siTDP2_5: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/G335Aneg_siT_5.1.fastq.gz
+    G335A_neg_siTDP2_6: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/G335Aneg_siT_6.1.fastq.gz
+    G335A_pos_siTDP2_1: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/G335Apos_siT_1.1.fastq.gz
+    G335A_pos_siTDP2_2: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/G335Apos_siT_2.1.fastq.gz
+    G335A_pos_siTDP2_3: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/G335Apos_siT_3.1.fastq.gz
+    G335A_pos_siTDP2_4: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/G335Apos_siT_4.1.fastq.gz
+    G335A_pos_siTDP2_5: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/G335Apos_siT_5.1.fastq.gz
+    G335A_pos_siTDP2_6: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/G335Apos_siT_6.1.fastq.gz
+    M337P_pos_siTDP2_1: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/M337Pneg_siT_1.1.fastq.gz
+    M337P_pos_siTDP2_2: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/M337Pneg_siT_2.1.fastq.gz
+    M337P_pos_siTDP2_3: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/M337Pneg_siT_3.1.fastq.gz
+    M337P_pos_siTDP2_4: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/M337Pneg_siT_4.1.fastq.gz
+    M337P_pos_siTDP2_5: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/M337Pneg_siT_5.1.fastq.gz
+    M337P_pos_siTDP2_6: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/M337Pneg_siT_6.1.fastq.gz
+    M337P_neg_siTDP2_1: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/M337Ppos_siT_1.1.fastq.gz
+    M337P_neg_siTDP2_2: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/M337Ppos_siT_2.1.fastq.gz
+    M337P_neg_siTDP2_3: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/M337Ppos_siT_3.1.fastq.gz
+    M337P_neg_siTDP2_4: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/M337Ppos_siT_4.1.fastq.gz
+    M337P_neg_siTDP2_5: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/M337Ppos_siT_5.1.fastq.gz
+    M337P_neg_siTDP2_6: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/M337Ppos_siT_6.1.fastq.gz
+    WT_neg_siTDP2_1: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTneg_siTDP_1.1.fastq.gz
+    WT_neg_siTDP2_2: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTneg_siTDP_2.1.fastq.gz
+    WT_neg_siTDP2_3: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTneg_siTDP_3.1.fastq.gz
+    WT_neg_siTDP2_4: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTneg_siTDP_4.1.fastq.gz
+    WT_neg_siTDP2_5: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTneg_siTDP_5.1.fastq.gz
+    WT_neg_siTDP2_6: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTneg_siTDP_6.1.fastq.gz
+    WT_pos_siTDP2_1: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTpos_siTDP_1.1.fastq.gz
+    WT_pos_siTDP2_2: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTpos_siTDP_2.1.fastq.gz
+    WT_pos_siTDP2_3: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTpos_siTDP_3.1.fastq.gz
+    WT_pos_siTDP2_4: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTpos_siTDP_4.1.fastq.gz
+    WT_pos_siTDP2_5: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTpos_siTDP_5.1.fastq.gz
+    WT_pos_siTDP2_6: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTpos_siTDP_6.1.fastq.gz
+    # WTssIV_neg_siTDP2_1: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTssIVneg_siTDP_1.1.fastq.gz
+    # WTssIV_neg_siTDP2_2: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTssIVneg_siTDP_2.1.fastq.gz
+    # WTssIV_neg_siTDP2_3: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTssIVneg_siTDP_3.1.fastq.gz
+    # WTssIV_pos_siTDP2_1: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTssIVpos_siTDP_1.1.fastq.gz
+    # WTssIV_pos_siTDP2_2: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTssIVpos_siTDP_2.1.fastq.gz
+    # WTssIV_pos_siTDP2_3: /camp/home/chakraa2/home/projects/martina/quantseq/20200827_PM19083/demux/WTssIVpos_siTDP_3.1.fastq.gz
+
+# First experiments resequenced
+
+    A326P_neg_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/A326Pneg_siT_1.1.fastq.gz
+    A326P_neg_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/A326Pneg_siT_2.1.fastq.gz
+    A326P_neg_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/A326Pneg_siT_3.1.fastq.gz
+    A326P_pos_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/A326Ppos_siT_1.1.fastq.gz
+    A326P_pos_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/A326Ppos_siT_2.1.fastq.gz
+    A326P_pos_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/A326Ppos_siT_3.1.fastq.gz
+    G294A_neg_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G294Aneg_siT_1.1.fastq.gz
+    G294A_neg_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G294Aneg_siT_2.1.fastq.gz
+    G294A_neg_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G294Aneg_siT_3.1.fastq.gz
+    G294A_pos_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G294Apos_siT_1.1.fastq.gz
+    G294A_pos_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G294Apos_siT_2.1.fastq.gz
+    G294A_pos_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G294Apos_siT_3.1.fastq.gz
+    G335A_neg_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G335Aneg_siT_1.1.fastq.gz
+    G335A_neg_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G335Aneg_siT_2.1.fastq.gz
+    G335A_neg_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G335Aneg_siT_3.1.fastq.gz
+    G335A_pos_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G335Apos_siT_1.1.fastq.gz
+    G335A_pos_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G335Apos_siT_2.1.fastq.gz
+    G335A_pos_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/G335Apos_siT_3.1.fastq.gz
+    M337P_neg_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/M337Pneg_siT_1.1.fastq.gz
+    M337P_neg_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/M337Pneg_siT_2.1.fastq.gz
+    M337P_neg_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/M337Pneg_siT_3.1.fastq.gz
+    M337P_pos_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/M337Ppos_siT_1.1.fastq.gz
+    M337P_pos_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/M337Ppos_siT_2.1.fastq.gz
+    M337P_pos_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/M337Ppos_siT_3.1.fastq.gz
+    Q331K_neg_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/Q331Kneg_siT_1.1.fastq.gz
+    Q331K_neg_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/Q331Kneg_siT_2.1.fastq.gz
+    Q331K_neg_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/Q331Kneg_siT_3.1.fastq.gz
+    Q331K_pos_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/Q331Kpos_siT_1.1.fastq.gz
+    Q331K_pos_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/Q331Kpos_siT_2.1.fastq.gz
+    Q331K_pos_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/Q331Kpos_siT_3.1.fastq.gz
+    WT_neg_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/WTneg_siTDP_1.1.fastq.gz
+    WT_neg_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/WTneg_siTDP_2.1.fastq.gz
+    WT_neg_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/WTneg_siTDP_3.1.fastq.gz
+    WT_pos_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/WTpos_siTDP_1.1.fastq.gz
+    WT_pos_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/WTpos_siTDP_2.1.fastq.gz
+    WT_pos_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/WTpos_siTDP_3.1.fastq.gz
+    delUCR_neg_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/delUCRneg_siT_1.1.fastq.gz
+    delUCR_neg_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/delUCRneg_siT_2.1.fastq.gz
+    delUCR_neg_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/delUCRneg_siT_3.1.fastq.gz
+    delUCR_pos_siTDP1_1: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/delUCRpos_siT_1.1.fastq.gz
+    delUCR_pos_siTDP1_2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/delUCRpos_siT_2.1.fastq.gz
+    delUCR_pos_siTDP1_3: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/PM19083_rerun/demux/delUCRpos_siT_3.1.fastq.gz
+
+# Indices
+star_index: /camp/lab/luscomben/home/users/chakraa2/projects/flora/ref/human/STAR_GRCh38_GencodeV33
+fai: /camp/lab/luscomben/home/users/chakraa2/projects/flora/ref/human/GRCh38.primary_assembly.genome.fa.fai
+gff3: /camp/lab/luscomben/home/users/chakraa2/projects/flora/ref/human/gencode.v33.annotation.gff3.gz 
+
+# Ref
+polyasite2: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/202101/ref/atlas.clusters.2.0.GRCh38.96.tsv.gz
+
+# Params
+minreads: 2 # Minimum number of reads per polyA cluster to keep cluster
+clusterdist: 200 # Distance between two clusters to merge
+pas: 0.5
+apa: 0.4
+nopas: 0.3
+
+# Scripts
+randompriming: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/scripts/RemoveRandomPrimingBedgraph.R
+annotateclusters: /camp/lab/luscomben/home/users/chakraa2/projects/martina/quantseq/scripts/AnnotatePolyASites.R
