@@ -13,9 +13,7 @@ configfile: 'config.yaml'
 
 rule all:
     input:
-        expand("results/counts/{sample}.polyacount.bed.gz", sample=config["samples"]),
-        expand("results/drimseq/{mutant}.d.rds", mutant=config["mutants"]),
-        "results/quantseq_report.html",
+        expand("results/counts/{sample}.polyacount.bed.gz", sample=config["samples"])
 
 # ==========
 # Preprocessing steps
@@ -275,48 +273,3 @@ rule createCountTable:
         awk '{{OFS="\t"}}{{if($6 == "+") {{print $1, $2, $3, $5}} else {{print $1, $2, $3, -$5}}}}' {output.polyacount} |
         sort -k1,1 -k2,2n | pigz > {output.polyabedgraph}
         """
-
-# ==========
-# DRIMSeq analysis
-# ==========
-
-# Function to define combined input for drimseq rule
-def drimseq_inputs(wildcards):
-    files = expand("results/counts/{sample}.polyacount.bed.gz", sample = config["samples"])
-    return files
-
-rule drimseq:
-    input:
-        counttables=drimseq_inputs,
-        pas="results/mergedclusters/polyAclusters.unique.annotated.bed",
-    output:
-        "results/drimseq/{mutant}.d.rds"
-    log:
-        "results/drimseq/{mutant}.rlog"
-    threads:
-        8
-    params:
-        mutant="{mutant}",
-        cluster="-J drimseq -N 1 -c 8 --mem=32G -t 12:00:00 -o logs/drimseq.{mutant}.%A.log"
-    run:
-        counttables = ','.join(input.counttables)
-        shell('scripts/drimseq.R {params.mutant} {input.pas} {counttables} {output} {threads} > {log} 2>&1')
-
-# Function to define combined input for report rule
-def report_inputs(wildcards):
-    files = expand("results/drimseq/{mutant}.d.rds", mutant = config["mutants"])
-    return files
-
-rule report:
-    input:
-        rds=report_inputs,
-        pas="results/mergedclusters/polyAclusters.unique.annotated.bed",
-    output:
-        report="results/quantseq_report.html",
-        reportcache=temp(directory("results/quantseq_report_files")),
-        # polyasiteoverlap="results/plots/polyAsite_overlap.pdf"
-    params:
-        polyasite2=config['polyasite2'],
-        cluster="-J report -N 1 -c 8 --mem=32G -t 12:00:00 -o logs/report.%A.log"
-    script:
-        "scripts/report.R"

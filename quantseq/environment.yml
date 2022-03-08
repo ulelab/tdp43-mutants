@@ -13,7 +13,7 @@ dependencies:
   - bioconda::snakemake=5.31.1
   - bioconda::fastqc=0.11.9
   - bioconda::cutadapt=3.0
-  - bioconda::star=2.7.4a
+  - bioconda::star=2.7.9a
   - bioconda::samtools=1.11
   - bioconda::ucsc-bedsort=377
   - bioconda::ucsc-bedgraphtobigwig=377
