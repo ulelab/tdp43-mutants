@@ -256,7 +256,7 @@ rule createCountTable:
         bam="results/mapped/{sample}.Aligned.sortedByCoord.out.bam",
     output:
         polyacount="results/counts/{sample}.polyacount.bed.gz",
-        bed=temp("results/counts/{sample}.Aligned.sortedByCoord.out.bed"),
+        bed="results/counts/{sample}.Aligned.sortedByCoord.out.bed",
         polyabedgraph="results/counts/{sample}.polyacount.bedgraph.gz",
     params:
         clusterdist=config['clusterdist'],
@@ -270,6 +270,7 @@ rule createCountTable:
         bedtools window -l {params.clusterdist} -r 0 -sw -sm -c -a {input.pas} -b {output.bed} | pigz > {output.polyacount}
 
         # Bedgraphs for visualisation
-        awk '{{OFS="\t"}}{{if($6 == "+") {{print $1, $2, $3, $5}} else {{print $1, $2, $3, -$5}}}}' {output.polyacount} |
+        gunzip -c {output.polyacount} |
+        awk '{{OFS="\t"}}{{if($6 == "+") {{print $1, $2, $3, $5}} else {{print $1, $2, $3, -$5}}}}' |
         sort -k1,1 -k2,2n | pigz > {output.polyabedgraph}
         """
