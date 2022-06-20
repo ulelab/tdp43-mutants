@@ -7,8 +7,8 @@ samples:
     WT_neg_siTDP2_4: /camp/home/jonesm5/home/users/jonesm5/projects/nf-quantseq/testdata/WT_neg_siTDP2_4.chr21.fastq.gz
 
 # Indices
-star_index: /camp/home/jonesm5/home/users/jonesm5/projects/nf-quantseq/work/a7/d7c2840bd26dde08b5e2d329b5ab2d/star
-fai:        /camp/home/jonesm5/home/users/jonesm5/projects/nf-quantseq/work/08/4f9e8cd2a9ce1bf26ff2e0fadaa612/genome.fa.fai
+star_index: /camp/home/jonesm5/home/users/jonesm5/projects/nf-quantseq/work/db/1f5edf1dcf663db0189653efe5bb65/star
+fai:        /camp/home/jonesm5/home/users/jonesm5/projects/nf-quantseq/work/88/a7ec7c7000fc1f505abdcd402f0ee6/genome.fa.fai
 gff3:       /camp/lab/luscomben/home/users/jonesm5/2020_10_20_pum1/data/gencode.v35.annotation.gff3.gz
 
 # Params
