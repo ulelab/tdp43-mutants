@@ -13,7 +13,8 @@ configfile: 'config.yaml'
 
 rule all:
     input:
-        expand("results/counts/{sample}.polyacount.bed.gz", sample=config["samples"])
+        expand("results/counts/{sample}.polyacount.bed.gz", sample=config["samples"]),
+        expand("results/coverage/{sample}_plus.bigwig", sample=config["samples"])
 
 # ==========
 # Preprocessing steps
@@ -211,7 +212,7 @@ rule mapStar:
 
         STAR --runThreadN {threads} \
         --genomeDir {params.star_index} --genomeLoad NoSharedMemory \
-        --readFilesIn {input.fastq} --readFilesCommand zcat \
+        --readFilesIn {output.polyAtrimmedfastq} --readFilesCommand zcat \
         --outFileNamePrefix {params.outprefix} \
         --sjdbScore 1 --alignSJoverhangMin 8 --alignSJDBoverhangMin 1 \
         --outFilterMultimapNmax 1 --outFilterMismatchNmax 999 --outFilterMismatchNoverReadLmax 0.04 \
@@ -227,7 +228,7 @@ rule mapStar:
 # Create RPM normalised bigwig for IGV
 rule createbigwig:
     input:
-        "results/mapped/{sample}.Aligned.sortedByCoord.out.bam"
+        bam="results/mapped/{sample}.Aligned.sortedByCoord.out.bam"
     output:
         bigwig_pos="results/coverage/{sample}_plus.bigwig",
         bigwig_neg="results/coverage/{sample}_minus.bigwig",
@@ -243,7 +244,7 @@ rule createbigwig:
         8
     shell:
         """
-        STAR --runThreadN {threads} --runMode inputAlignmentsFromBAM --inputBAMfile {input} --outWigType bedGraph --outWigStrand Stranded --outWigNorm RPM --outFileNamePrefix {params.outprefix}
+        STAR --runThreadN {threads} --runMode inputAlignmentsFromBAM --inputBAMfile {input.bam} --outWigType bedGraph --outWigStrand Stranded --outWigNorm RPM --outFileNamePrefix {params.outprefix}
         bedSort {output.bg_pos} {output.bg_pos}
         bedSort {output.bg_neg} {output.bg_neg}
         bedGraphToBigWig {output.bg_pos} {params.fai} {output.bigwig_pos}
@@ -271,6 +272,6 @@ rule createCountTable:
 
         # Bedgraphs for visualisation
         gunzip -c {output.polyacount} |
-        awk '{{OFS="\t"}}{{if($6 == "+") {{print $1, $2, $3, $5}} else {{print $1, $2, $3, -$5}}}}' |
+        awk '{{OFS="\t"}}{{if($6 == "+") {{print $1, $2, $3, $10}} else {{print $1, $2, $3, -$10}}}}' |
         sort -k1,1 -k2,2n | pigz > {output.polyabedgraph}
         """
