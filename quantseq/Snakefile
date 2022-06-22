@@ -197,7 +197,7 @@ rule mapStar:
     input:
         fastq="results/cutadapt/{sample}_trimmed.fastq.gz"
     output:
-        polyAtrimmedfastq=temp("results/mapped/{sample}.polya.trimmed.fastq.gz"),
+        polyAtrimmedfastq="results/mapped/{sample}.polya.trimmed.fastq.gz",
         bam="results/mapped/{sample}.Aligned.sortedByCoord.out.bam",
         bai="results/mapped/{sample}.Aligned.sortedByCoord.out.bam.bai",
     threads:
